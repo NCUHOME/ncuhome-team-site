@@ -1,5 +1,4 @@
 import { defineConfig } from "vite";
-import viteSSR from "vite-ssr/plugin";
 import react from "@vitejs/plugin-react";
 import path from "path";
 
@@ -19,14 +18,6 @@ export default defineConfig({
   },
   css: { preprocessorOptions: { scss: { charset: false } } },
   plugins: [
-    react(),
-    viteSSR({
-      features: {
-        // Manually disable features that are
-        // detected because this is a mono repo
-        reactStyledComponents: false,
-        reactApolloRenderer: false,
-      },
-    }),
+  react(),
   ],
 });
