@@ -11,7 +11,7 @@ jobs:
   csr:
     runs-on: self-hosted
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 1
 
@@ -23,13 +23,25 @@ jobs:
         run: |
           pnpm build
 
-      - name: Upload website to Aliyun OSS
-        uses: ncuhome/ali-oss-website-action@v1.1.0
-        id: upload
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v5
         with:
-          folder: dist # 待上传的文件夹
-          accessKeyId: ${{ secrets.ACCESSKEYID }} ## 通过 secrets 注入 ak
-          accessKeySecret: ${{ secrets.ACCESSKEYSECRET }}
-          bucket: team-site # 要上传到的 bucket, 若不存在会自动新建
-          endpoint: https://oss-cn-shanghai.aliyuncs.com # 指定区域的 oss endpoint
-          incremental: true # 开启增量上传，只上传 md5 值变化、新增、删除 的文件
+          images: harbor.ncuos.com/incu-be/incu-fe
+
+      - name: Build Docker Image and Push
+        uses: docker/build-push-action@v6
+        with:
+          push: true
+          context: .
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+
+      - name: Update Deployment
+        uses: MultiMx/K8sSetImageAction@v0.5
+        with:
+          backend: "https://rancher.ncuos.com"
+          token: ${{ secrets.RANCHER_TOKEN }}
+          namespace: incu-be
+          workload: incu-fe
+          image: ${{ fromJSON(steps.meta.outputs.json).tags[0] }}
