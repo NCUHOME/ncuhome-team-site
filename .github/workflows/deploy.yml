@@ -12,8 +12,12 @@ jobs:
     runs-on: self-hosted
     steps:
       - uses: actions/checkout@v5
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
         with:
-          fetch-depth: 1
+          node-version: "22"
+          cache: "pnpm"
 
       - name: Install dependencies
         run: |
@@ -27,7 +31,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: harbor.ncuos.com/incu-be/incu-fe
+          images: harbor.ncuos.com/new-team/old-team
 
       - name: Build Docker Image and Push
         uses: docker/build-push-action@v6
@@ -42,6 +46,6 @@ jobs:
         with:
           backend: "https://rancher.ncuos.com"
           token: ${{ secrets.RANCHER_TOKEN }}
-          namespace: incu-be
-          workload: incu-fe
+          namespace: team-2025
+          workload: old-team
           image: ${{ fromJSON(steps.meta.outputs.json).tags[0] }}
