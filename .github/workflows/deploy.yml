@@ -1,55 +1,34 @@
-name: Deploy
+name: Build and Deploy
 
 on:
   push:
-    branches: [main]
-    paths-ignore:
-      - "README.md"
+    branches: [ main ]
   workflow_dispatch:
 
 jobs:
-  csr:
+  build:
     runs-on: self-hosted
     steps:
       - uses: actions/checkout@v5
-
-      - uses: pnpm/action-setup@v4
-        with:
-            version: 10
-
-      - name: Setup Node.js
+      
+      - name: Install Node.js
         uses: actions/setup-node@v5
         with:
-          node-version: "22"
-          cache: "pnpm"
-
-      - name: Install dependencies
+            package-manager-cache: false
+      
+      - name: Build dist
         run: |
-          pnpm i
-
-      - name: Build project
-        run: |
+          corepack enable
+          pnpm install
           pnpm build
-
-      - name: Docker meta
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: harbor.ncuos.com/new-team/old-team
-
-      - name: Build Docker Image and Push
-        uses: docker/build-push-action@v6
-        with:
-          push: true
-          context: .
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-
-      - name: Update Deployment
-        uses: MultiMx/K8sSetImageAction@v0.5
-        with:
-          backend: "https://rancher.ncuos.com"
-          token: ${{ secrets.RANCHER_TOKEN }}
-          namespace: team-2025
-          workload: old-team
-          image: ${{ fromJSON(steps.meta.outputs.json).tags[0] }}
+      
+      - name: Sync to S3
+        env:
+          AWS_REGION: garage
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_ENDPOINT_URL: https://s3.ncuos.com
+          AWS_MAX_ATTEMPTS: 10
+          BUCKET_NAME: team-fe
+        run: |
+          aws s3 sync dist/ s3://$BUCKET_NAME/ --delete
