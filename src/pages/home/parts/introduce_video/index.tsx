@@ -22,7 +22,7 @@ const VideoPlayer: React.FC<Props> = ({
       autoPlay
       loop
       muted
-      src="https://oss.ncuos.com/team/video.mp4"
+      src="https://static.ncuos.com/team/video.mp4"
     />
   </div>
 );
