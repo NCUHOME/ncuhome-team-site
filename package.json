@@ -2,6 +2,7 @@
   "name": "ncuhome_new_site",
   "version": "0.0.0",
   "license": "GPLV3",
+  "packageManager": "pnpm@11.24.0",
   "scripts": {
     "dev": "vite --open --force",
     "build": "vite build"
